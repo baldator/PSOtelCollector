@@ -1,0 +1,22 @@
+{
+  "name": "otel-collector-powershell",
+  "version": "1.0.0",
+  "description": "PowerShell module for sending logs, metrics, and traces to OpenTelemetry collectors",
+  "private": true,
+  "scripts": {
+    "test": "pwsh -File test-module.ps1",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "opentelemetry",
+    "otel",
+    "powershell",
+    "logging",
+    "metrics",
+    "tracing",
+    "observability",
+    "telemetry"
+  ]
+}

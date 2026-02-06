@@ -1,0 +1,29 @@
+# PowerShell
+*.ps1xml
+*.pssc
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Docker
+.env
+
+# OTEL data
+otel-data.json
+/tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

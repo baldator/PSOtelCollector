@@ -1,0 +1,180 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  MODULE_NAME: 'PSOpenTelemetry'
+  MODULE_PATH: './OtelCollector/OtelCollector.psm1'
+  MANIFEST_PATH: './OtelCollector/OtelCollector.psd1'
+
+jobs:
+  test:
+    name: Test Module
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        powershell-version: ['7.4.x']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Write-Host "Installing Pester..."
+        Install-Module -Name Pester -Scope CurrentUser -Force -AllowClobber
+        Write-Host "Pester installed successfully."
+    
+    - name: Import Module for Testing
+      shell: pwsh
+      run: |
+        Write-Host "Importing module for testing..."
+        Import-Module .\OtelCollector\OtelCollector.psm1 -Force
+        Write-Host "Module imported successfully."
+    
+    - name: Run Unit Tests
+      shell: pwsh
+      run: |
+        Write-Host "Running unit tests..."
+        $testResults = pester .\tests\OtelCollector.Tests.Unit.ps1 -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage .\OtelCollector\OtelCollector.psm1 -CodeCoverageOutput coverage.xml
+        
+        # Check exit code
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Unit tests failed!"
+          exit 1
+        }
+        
+        Write-Host "Unit tests completed successfully."
+    
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: |
+          TestResults.xml
+          coverage.xml
+        retention-days: 30
+
+  publish:
+    name: Publish to PowerShell Gallery
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PowerShell
+      uses: actions/setup-powershell@v5
+      with:
+        pwsh-version: '7.4.x'
+    
+    - name: Download Dependencies (for publishing)
+      shell: pwsh
+      run: |
+        Write-Host "Downloading .NET dependencies for publishing..."
+        Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+        
+        # Run the dependency loader
+        .\Load-Dependencies.ps1
+        
+        # Verify dependencies were loaded
+        $packagesPath = Join-Path $env:TEMP "PSOpenTelemetryPackages"
+        if (-not (Test-Path $packagesPath)) {
+          Write-Warning "Dependency packages directory not found"
+        }
+        
+        Write-Host "Dependencies downloaded successfully for publishing."
+    
+    - name: Check Module Version
+      id: version-check
+      shell: pwsh
+      run: |
+        Write-Host "Checking module version..."
+        
+        # Get version from manifest
+        $manifestPath = './PSOpenTelemetry.psd1'
+        $manifest = Test-ModuleManifest -Path $manifestPath
+        $localVersion = $manifest.Version.ToString()
+        
+        Write-Host "Local module version: $localVersion"
+        Write-Host "version=$localVersion" >> $env:GITHUB_OUTPUT
+        
+        # Check if module exists on PowerShell Gallery
+        try {
+          $galleryModule = Find-Module -Name $env:MODULE_NAME -ErrorAction SilentlyContinue
+          if ($galleryModule) {
+            $galleryVersion = $galleryModule.Version.ToString()
+            Write-Host "PowerShell Gallery version: $galleryVersion"
+            Write-Host "gallery_version=$galleryVersion" >> $env:GITHUB_OUTPUT
+            
+            if ($localVersion -eq $galleryVersion) {
+              Write-Host "Version already exists on PowerShell Gallery. Skipping publish."
+              Write-Host "skip_publish=true" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "New version detected. Proceeding with publish."
+              Write-Host "skip_publish=false" >> $env:GITHUB_OUTPUT
+            }
+          } else {
+            Write-Host "Module not found on PowerShell Gallery. Proceeding with publish."
+            Write-Host "gallery_version=none" >> $env:GITHUB_OUTPUT
+            Write-Host "skip_publish=false" >> $env:GITHUB_OUTPUT
+          }
+        } catch {
+          Write-Warning "Could not check PowerShell Gallery version: $($_.Exception.Message)"
+          Write-Host "gallery_version=unknown" >> $env:GITHUB_OUTPUT
+          Write-Host "skip_publish=false" >> $env:GITHUB_OUTPUT
+        }
+    
+    - name: Publish Module to PowerShell Gallery
+      if: steps.version-check.outputs.skip_publish != 'true'
+      shell: pwsh
+      env:
+        PS_GALLERY_API_KEY: ${{ secrets.PS_GALLERY_API_KEY }}
+      run: |
+        Write-Host "Publishing module to PowerShell Gallery..."
+        Write-Host "Module Name: $env:MODULE_NAME"
+        Write-Host "Module Version: ${{ steps.version-check.outputs.version }}"
+        
+        if (-not $env:PS_GALLERY_API_KEY) {
+          Write-Error "PowerShell Gallery API key not found in secrets."
+          exit 1
+        }
+        
+        try {
+          # Publish the module
+          Publish-Module `
+            -Path '.' `
+            -NuGetApiKey $env:PS_GALLERY_API_KEY `
+            -Repository PSGallery `
+            -Force
+          
+          Write-Host "Module published successfully!"
+        } catch {
+          Write-Error "Failed to publish module: $($_.Exception.Message)"
+          exit 1
+        }
+    
+    - name: Publish Skipped Notification
+      if: steps.version-check.outputs.skip_publish == 'true'
+      run: |
+        echo "Publish skipped: Version ${{ steps.version-check.outputs.version }} already exists on PowerShell Gallery"
+    
+    - name: Upload Published Package
+      if: steps.version-check.outputs.skip_publish != 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-package
+        path: |
+          *.nupkg
+          *.psd1
+          *.psm1
+        retention-days: 90
