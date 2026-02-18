@@ -42,7 +42,7 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "Running unit tests..."
-        $testResults = Invoke-Pester .\Tests\OtelCollector.Tests.Unit.ps1 -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage .\OtelCollector\OtelCollector.psm1 -CodeCoverageOutputFile  coverage.xml
+        $testResults = Invoke-Pester .\Tests\ -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage .\OtelCollector\OtelCollector.psm1 -CodeCoverageOutputFile  coverage.xml
         
         # Check exit code
         if ($LASTEXITCODE -ne 0) {
