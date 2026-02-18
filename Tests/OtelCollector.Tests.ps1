@@ -48,6 +48,7 @@ Describe 'OtelCollector Module' {
             }
             catch {
                 $msg = $_.Exception.Message
+                write-host "Caught error: $msg" -ForegroundColor Yellow
                 $ok = $msg -like '*connection*' -or $msg -like '*Unable to connect*'
             }
             $ok | Should -BeTrue
@@ -72,9 +73,10 @@ Describe 'OtelCollector Module' {
     Context 'All log severity levels' {
         $severities = @('TRACE','DEBUG','INFO','WARN','ERROR','FATAL')
         foreach ($severity in $severities) {
-            It "handles severity $severity (or connection error)" {
+            It "handles severity <Severity> (or connection error)" -TestCases @{ Severity = $severity } {
+                param($Severity)
                 try {
-                    Send-OtelLog -Message "Test $severity message" -Severity $severity -ErrorAction Stop
+                    Send-OtelLog -Message "Test $Severity message" -Severity $Severity -ErrorAction Stop
                     $ok = $true
                 }
                 catch {
@@ -89,9 +91,10 @@ Describe 'OtelCollector Module' {
     Context 'All metric types' {
         $metricTypes = @('Gauge','Counter','Histogram')
         foreach ($type in $metricTypes) {
-            It "handles metric type $type (or connection error)" {
+            It "handles metric type <Type> (or connection error)" -TestCases @{ Type = $type } {
+                param($Type)
                 try {
-                    Send-OtelMetric -Name "test.$($type.ToLower())" -Value 100 -Type $type -ErrorAction Stop
+                    Send-OtelMetric -Name "test.$($Type.ToLower())" -Value 100 -Type $Type -ErrorAction Stop
                     $ok = $true
                 }
                 catch {
@@ -106,10 +109,11 @@ Describe 'OtelCollector Module' {
     Context 'All span kinds' {
         $spanKinds = @('INTERNAL','SERVER','CLIENT','PRODUCER','CONSUMER')
         foreach ($kind in $spanKinds) {
-            It "handles span kind $kind (or connection error)" {
+            It "handles span kind <Kind> (or connection error)" -TestCases @{ Kind = $kind } {
+                param($Kind)
                 $testSpanId = New-OtelSpanId
                 try {
-                    Send-OtelTrace -Name "Test$kind" -TraceId $traceId -SpanId $testSpanId -Kind $kind -ErrorAction Stop
+                    Send-OtelTrace -Name "Test$Kind" -TraceId $traceId -SpanId $testSpanId -Kind $Kind -ErrorAction Stop
                     $ok = $true
                 }
                 catch {

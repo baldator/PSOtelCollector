@@ -196,7 +196,7 @@ function Send-OtelLog {
     $endpoint = "$($script:OtelConfig.Endpoint)/v1/logs"
 
     try {
-        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 10) -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 20) -ErrorAction Stop
         Write-Verbose "Log sent successfully to $endpoint"
         return $response
     }
@@ -347,7 +347,7 @@ function Send-OtelMetric {
     $endpoint = "$($script:OtelConfig.Endpoint)/v1/metrics"
 
     try {
-        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 10) -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 20) -ErrorAction Stop
         Write-Verbose "Metric sent successfully to $endpoint"
         return $response
     }
@@ -530,7 +530,7 @@ function Send-OtelTrace {
     $endpoint = "$($script:OtelConfig.Endpoint)/v1/traces"
 
     try {
-        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 10) -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $script:OtelConfig.Headers -Body ($payload | ConvertTo-Json -Depth 20) -ErrorAction Stop
         Write-Verbose "Trace sent successfully to $endpoint"
         return @{
             TraceId  = $TraceId
@@ -579,3 +579,4 @@ function New-OtelSpanId {
 }
 
 Export-ModuleMember -Function Initialize-OtelCollector, Send-OtelLog, Send-OtelMetric, Send-OtelTrace, New-OtelTraceId, New-OtelSpanId
+

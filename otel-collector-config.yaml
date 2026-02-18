@@ -26,8 +26,8 @@ processors:
 
 exporters:
   # Console exporter for debugging
-  logging:
-    loglevel: debug
+  debug:
+    verbosity: detailed
 
   # Jaeger exporter for traces
   otlp/jaeger:
@@ -42,27 +42,25 @@ exporters:
 
   # File exporter for backup
   file:
-    path: /tmp/otel-data.json
+    path: /etc/otel-data/otel-data.json
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch, attributes]
-      exporters: [logging, otlp/jaeger]
+      exporters: [debug, otlp/jaeger]
 
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging, prometheus]
+      exporters: [debug, prometheus]
 
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [logging, file]
+      exporters: [debug, file]
 
   telemetry:
     logs:
       level: debug
-    metrics:
-      address: 0.0.0.0:8888
