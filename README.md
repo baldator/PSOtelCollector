@@ -43,7 +43,13 @@ Import-Module .\OtelCollector\OtelCollector.psd1
 Import-Module OtelCollector
 
 # Initialize connection to your OTEL collector
+# Option 1: Using parameters
 Initialize-OtelCollector -Endpoint "http://localhost:4318" -ServiceName "MyApp"
+
+# Option 2: Using environment variables (OTEL_ENDPOINT and SERVICE_NAME)
+$env:OTEL_ENDPOINT = "http://localhost:4318"
+$env:SERVICE_NAME = "MyApp"
+Initialize-OtelCollector
 
 # Send a log
 Send-OtelLog -Message "Application started" -Severity "INFO"
@@ -73,11 +79,18 @@ Initialize-OtelCollector `
 ```
 
 **Parameters:**
-- `Endpoint` (required): The base URL of your OTEL collector
-- `ServiceName` (required): Your application/service name
+- `Endpoint`: The base URL of your OTEL collector. If not provided, uses `OTEL_ENDPOINT` environment variable.
+- `ServiceName`: Your application/service name. If not provided, uses `SERVICE_NAME` environment variable.
 - `ServiceVersion`: Version string (default: "1.0.0")
 - `Headers`: Additional HTTP headers for authentication
 - `ResourceAttributes`: Additional resource attributes for all telemetry
+
+**Environment Variables:**
+You can configure the collector using environment variables instead of parameters:
+- `OTEL_ENDPOINT`: The base URL of your OTEL collector (e.g., `http://localhost:4318`)
+- `SERVICE_NAME`: Your application/service name
+
+Parameters take priority over environment variables.
 
 ### Send-OtelLog
 

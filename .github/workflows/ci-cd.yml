@@ -71,29 +71,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup PowerShell
-      uses: actions/setup-powershell@v5
-      with:
-        pwsh-version: '7.4.x'
-    
-    - name: Download Dependencies (for publishing)
-      shell: pwsh
-      run: |
-        Write-Host "Downloading .NET dependencies for publishing..."
-        Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
-        
-        # Run the dependency loader
-        .\Load-Dependencies.ps1
-        
-        # Verify dependencies were loaded
-        $packagesPath = Join-Path $env:TEMP "PSOpenTelemetryPackages"
-        if (-not (Test-Path $packagesPath)) {
-          Write-Warning "Dependency packages directory not found"
-        }
-        
-        Write-Host "Dependencies downloaded successfully for publishing."
-    
+   
     - name: Check Module Version
       id: version-check
       shell: pwsh

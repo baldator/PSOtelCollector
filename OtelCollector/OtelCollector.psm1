@@ -27,12 +27,16 @@ function Initialize-OtelCollector {
 
     .DESCRIPTION
         Sets up the OTEL collector endpoint and service information for subsequent telemetry operations.
+        The Endpoint and ServiceName can be provided as parameters or through environment variables
+        (OTEL_ENDPOINT and SERVICE_NAME). Parameters take priority over environment variables.
 
     .PARAMETER Endpoint
-        The base URL of the OTEL collector (e.g., http://localhost:4318)
+        The base URL of the OTEL collector (e.g., http://localhost:4318).
+        If not provided, will check for OTEL_ENDPOINT environment variable.
 
     .PARAMETER ServiceName
-        The name of your service
+        The name of your service.
+        If not provided, will check for SERVICE_NAME environment variable.
 
     .PARAMETER ServiceVersion
         The version of your service (default: 1.0.0)
@@ -45,13 +49,19 @@ function Initialize-OtelCollector {
 
     .EXAMPLE
         Initialize-OtelCollector -Endpoint "http://localhost:4318" -ServiceName "MyApp"
+
+    .EXAMPLE
+        # Using environment variables
+        $env:OTEL_ENDPOINT = "http://localhost:4318"
+        $env:SERVICE_NAME = "MyApp"
+        Initialize-OtelCollector
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$Endpoint,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$ServiceName,
 
         [Parameter(Mandatory = $false)]
@@ -63,6 +73,22 @@ function Initialize-OtelCollector {
         [Parameter(Mandatory = $false)]
         [hashtable]$ResourceAttributes = @{}
     )
+
+    # Resolve Endpoint: parameter > env var > exception
+    if ([string]::IsNullOrWhiteSpace($Endpoint)) {
+        $Endpoint = $env:OTEL_ENDPOINT
+        if ([string]::IsNullOrWhiteSpace($Endpoint)) {
+            throw "Endpoint is required. Provide it as a parameter or set the OTEL_ENDPOINT environment variable."
+        }
+    }
+
+    # Resolve ServiceName: parameter > env var > exception
+    if ([string]::IsNullOrWhiteSpace($ServiceName)) {
+        $ServiceName = $env:SERVICE_NAME
+        if ([string]::IsNullOrWhiteSpace($ServiceName)) {
+            throw "ServiceName is required. Provide it as a parameter or set the SERVICE_NAME environment variable."
+        }
+    }
 
     $script:OtelConfig = [OtelConfig]::new($Endpoint, $ServiceName)
     $script:OtelConfig.ServiceVersion = $ServiceVersion

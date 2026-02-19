@@ -18,6 +18,88 @@ Describe 'OtelCollector Module' {
         }
     }
 
+    Context 'Initialize-OtelCollector with environment variables' {
+        BeforeEach {
+            # Clear any existing environment variables before each test
+            $env:OTEL_ENDPOINT = $null
+            $env:SERVICE_NAME = $null
+        }
+
+        AfterEach {
+            # Clean up environment variables after each test
+            $env:OTEL_ENDPOINT = $null
+            $env:SERVICE_NAME = $null
+        }
+
+        It 'uses OTEL_ENDPOINT environment variable when parameter not provided' {
+            $env:OTEL_ENDPOINT = "http://env-collector:4318"
+            $env:SERVICE_NAME = "EnvService"
+            
+            InModuleScope -ModuleName OtelCollector -ScriptBlock {
+                Initialize-OtelCollector
+                $script:OtelConfig.Endpoint | Should -Be "http://env-collector:4318"
+                $script:OtelConfig.ServiceName | Should -Be "EnvService"
+            }
+        }
+
+        It 'uses SERVICE_NAME environment variable when parameter not provided' {
+            $env:OTEL_ENDPOINT = "http://localhost:4318"
+            $env:SERVICE_NAME = "ServiceFromEnv"
+            
+            InModuleScope -ModuleName OtelCollector -ScriptBlock {
+                Initialize-OtelCollector
+                $script:OtelConfig.ServiceName | Should -Be "ServiceFromEnv"
+            }
+        }
+
+        It 'parameter takes priority over environment variable for Endpoint' {
+            $env:OTEL_ENDPOINT = "http://env-endpoint:4318"
+            $env:SERVICE_NAME = "EnvService"
+            
+            InModuleScope -ModuleName OtelCollector -ScriptBlock {
+                Initialize-OtelCollector -Endpoint "http://param-endpoint:4318"
+                $script:OtelConfig.Endpoint | Should -Be "http://param-endpoint:4318"
+            }
+        }
+
+        It 'parameter takes priority over environment variable for ServiceName' {
+            $env:OTEL_ENDPOINT = "http://localhost:4318"
+            $env:SERVICE_NAME = "EnvServiceName"
+            
+            InModuleScope -ModuleName OtelCollector -ScriptBlock {
+                Initialize-OtelCollector -ServiceName "ParamServiceName"
+                $script:OtelConfig.ServiceName | Should -Be "ParamServiceName"
+            }
+        }
+
+        It 'throws exception when Endpoint not provided and OTEL_ENDPOINT not set' {
+            $env:SERVICE_NAME = "TestService"
+            
+            { Initialize-OtelCollector } | Should -Throw "*Endpoint*required*"
+        }
+
+        It 'throws exception when ServiceName not provided and SERVICE_NAME not set' {
+            $env:OTEL_ENDPOINT = "http://localhost:4318"
+            
+            { Initialize-OtelCollector } | Should -Throw "*ServiceName*required*"
+        }
+
+        It 'throws exception when both Endpoint and ServiceName are missing' {
+            { Initialize-OtelCollector } | Should -Throw "*Endpoint*required*"
+        }
+
+        It 'initializes with both Endpoint and ServiceName from environment variables' {
+            $env:OTEL_ENDPOINT = "http://localhost:4318"
+            $env:SERVICE_NAME = "FullEnvService"
+            
+            InModuleScope -ModuleName OtelCollector -ScriptBlock {
+                Initialize-OtelCollector
+                $script:OtelConfig.Endpoint | Should -Be "http://localhost:4318"
+                $script:OtelConfig.ServiceName | Should -Be "FullEnvService"
+            }
+        }
+    }
+
     Context 'ID generation' {
         It 'generates a 32-character TraceId' {
             $traceId.Length | Should -Be 32
