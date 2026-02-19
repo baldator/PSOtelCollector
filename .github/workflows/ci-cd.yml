@@ -130,7 +130,7 @@ jobs:
         try {
           # Publish the module
           Publish-Module `
-            -Path '.' `
+            -Path './OtelCollector' `
             -NuGetApiKey $env:PS_GALLERY_API_KEY `
             -Repository PSGallery `
             -Force

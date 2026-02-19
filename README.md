@@ -1,5 +1,11 @@
 # OtelCollector PowerShell Module
 
+![OtelCollector PowerShell Module](https://raw.githubusercontent.com/baldator/PSOtelCollector/main/otelcollector-logo.jpg)
+
+[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/baldator/PSOtelCollector/main.svg)](https://github.com/baldator/PSOtelCollector/commits/main)
+[![GitHub actions status](https://github.com/baldator/PSOtelCollector/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/baldator/PSOtelCollector/actions)
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/OtelCollector.svg)](https://www.powershellgallery.com/packages/OtelCollector)
+
 A comprehensive PowerShell module for sending logs, metrics, and traces to OpenTelemetry collectors using the OTLP/HTTP JSON protocol.
 
 ## Features
