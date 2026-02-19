@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  MODULE_NAME: 'PSOpenTelemetry'
+  MODULE_NAME: 'OtelCollector'
   MODULE_PATH: './OtelCollector/OtelCollector.psm1'
   MANIFEST_PATH: './OtelCollector/OtelCollector.psd1'
 
@@ -35,14 +35,14 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "Importing module for testing..."
-        Import-Module .\OtelCollector\OtelCollector.psm1 -Force
+        Import-Module $env:MODULE_PATH -Force
         Write-Host "Module imported successfully."
     
     - name: Run Unit Tests
       shell: pwsh
       run: |
         Write-Host "Running unit tests..."
-        $testResults = Invoke-Pester .\Tests\ -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage .\OtelCollector\OtelCollector.psm1 -CodeCoverageOutputFile  coverage.xml
+        $testResults = Invoke-Pester .\Tests\ -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage $env:MODULE_PATH -CodeCoverageOutputFile  coverage.xml
         
         # Check exit code
         if ($LASTEXITCODE -ne 0) {
@@ -79,7 +79,7 @@ jobs:
         Write-Host "Checking module version..."
         
         # Get version from manifest
-        $manifestPath = './PSOpenTelemetry.psd1'
+        $manifestPath = $env:MANIFEST_PATH
         $manifest = Test-ModuleManifest -Path $manifestPath
         $localVersion = $manifest.Version.ToString()
         
